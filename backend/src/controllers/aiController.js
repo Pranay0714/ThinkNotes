@@ -2,7 +2,7 @@ import { enhanceText } from "../services/wordglowService.js";
 
 export async function enhanceNote(req, res) {
   try {
-    const { text } = req.body;
+    const { text, mode = "improve" } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({
@@ -10,7 +10,21 @@ export async function enhanceNote(req, res) {
       });
     }
 
-    const result = await enhanceText(text);
+    const allowedModes = [
+      "improve",
+      "grammar",
+      "professional",
+      "concise",
+      "clarity",
+    ];
+
+    if (!allowedModes.includes(mode)) {
+      return res.status(400).json({
+        message: "Invalid AI improvement mode",
+      });
+    }
+
+    const result = await enhanceText(text, mode);
 
     res.status(200).json(result);
   } catch (error) {

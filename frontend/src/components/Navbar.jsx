@@ -5,24 +5,41 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const navigate = useNavigate();
 
-  // Get logged-in user from localStorage
+  // Get logged-in user from localStorage safely
   const [user] = useState(() => {
-    const storedUser = localStorage.getItem("user");
+    try {
+      const storedUser = localStorage.getItem("user");
 
-    return storedUser ? JSON.parse(storedUser) : null;
+      return storedUser
+        ? JSON.parse(storedUser)
+        : null;
+    } catch (error) {
+      console.error(
+        "Failed to parse user data:",
+        error
+      );
+
+      // Remove corrupted user data
+      localStorage.removeItem("user");
+
+      return null;
+    }
   });
 
-  // Logout
+  // Logout Handler
   const handleLogout = () => {
     // Remove authentication data
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    // Redirect to login page
+    toast.success("Logged out successfully");
+
+    // Redirect to login
     navigate("/login");
   };
 
@@ -41,7 +58,7 @@ const Navbar = () => {
           {/* Right Side */}
           <div className="flex items-center gap-4">
 
-            {/* User Information */}
+            {/* Logged-in User */}
             {user && (
               <div className="hidden sm:flex items-center gap-2 text-orange-100">
                 <UserIcon className="size-5 text-orange-300" />
@@ -58,6 +75,7 @@ const Navbar = () => {
               className="btn btn-primary bg-orange-300 border-orange-300 hover:bg-orange-400 hover:border-orange-400"
             >
               <PlusIcon className="size-5" />
+
               <span className="hidden sm:inline">
                 New Note
               </span>
