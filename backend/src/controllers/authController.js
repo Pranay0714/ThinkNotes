@@ -2,23 +2,41 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
+// Register User
 export async function registerUser(req, res) {
   try {
-    const { name, email, password } = req.body;
+    const { name, userName, email, password } = req.body;
 
     // Check if all fields are provided
-    if (!name || !email || !password) {
+    if (!name || !userName || !email || !password) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Normalize input
+    const normalizedUserName = userName.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (existingUser) {
+    // Check if email already exists
+    const existingEmail = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingEmail) {
       return res.status(400).json({
-        message: "User already exists",
+        message: "Email already registered",
+      });
+    }
+
+    // Check if username already exists
+    const existingUserName = await User.findOne({
+      userName: normalizedUserName,
+    });
+
+    if (existingUserName) {
+      return res.status(400).json({
+        message: "Username already taken",
       });
     }
 
@@ -27,8 +45,9 @@ export async function registerUser(req, res) {
 
     // Create new user
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      userName: normalizedUserName,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
@@ -38,39 +57,57 @@ export async function registerUser(req, res) {
       user: {
         id: user._id,
         name: user.name,
+        userName: user.userName,
         email: user.email,
       },
     });
   } catch (error) {
     console.error("Error registering user:", error);
 
+    // Handle duplicate MongoDB values
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Email or username already exists",
+      });
+    }
+
     res.status(500).json({
       message: "Server error",
     });
   }
 }
+
+// Login User
 export async function loginUser(req, res) {
   try {
-    const { email, password } = req.body;
+    const { loginId, password } = req.body;
 
-    // Check if email and password are provided
-    if (!email || !password) {
+    // Check required fields
+    if (!loginId || !password) {
       return res.status(400).json({
-        message: "Email and password are required",
+        message: "Username/email and password are required",
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    // Normalize login input
+    const normalizedLoginId = loginId.trim().toLowerCase();
 
-    // If user does not exist
+    // Find user using Email OR Username
+    const user = await User.findOne({
+      $or: [
+        { email: normalizedLoginId },
+        { userName: normalizedLoginId },
+      ],
+    });
+
+    // User not found
     if (!user) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: "Invalid username/email or password",
       });
     }
 
-    // Compare entered password with hashed password
+    // Compare password
     const isPasswordCorrect = await bcrypt.compare(
       password,
       user.password
@@ -78,7 +115,7 @@ export async function loginUser(req, res) {
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: "Invalid username/email or password",
       });
     }
 
@@ -100,6 +137,7 @@ export async function loginUser(req, res) {
       user: {
         id: user._id,
         name: user.name,
+        userName: user.userName,
         email: user.email,
       },
     });

@@ -5,6 +5,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
+  const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -27,6 +28,7 @@ const RegisterPage = () => {
           },
           body: JSON.stringify({
             name,
+            userName,
             email,
             password,
           }),
@@ -64,6 +66,7 @@ const RegisterPage = () => {
         )}
 
         <form onSubmit={handleRegister}>
+          {/* Name */}
           <div className="mb-4">
             <label className="mb-2 block font-medium">
               Name
@@ -79,6 +82,29 @@ const RegisterPage = () => {
             />
           </div>
 
+          {/* Username */}
+          <div className="mb-4">
+            <label className="mb-2 block font-medium">
+              Username
+            </label>
+
+            <input
+              type="text"
+              placeholder="Choose a username"
+              className="input input-bordered w-full"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              minLength={3}
+              maxLength={30}
+              required
+            />
+
+            <p className="mt-1 text-sm opacity-70">
+              3-30 characters
+            </p>
+          </div>
+
+          {/* Email */}
           <div className="mb-4">
             <label className="mb-2 block font-medium">
               Email
@@ -94,6 +120,7 @@ const RegisterPage = () => {
             />
           </div>
 
+          {/* Password */}
           <div className="mb-6">
             <label className="mb-2 block font-medium">
               Password

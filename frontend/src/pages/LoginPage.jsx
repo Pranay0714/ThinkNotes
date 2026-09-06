@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router";
+import api from "../lib/axios";
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,26 +18,12 @@ const LoginPage = () => {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        "http://localhost:5001/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const response = await api.post("/auth/login", {
+        loginId,
+        password,
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
+      const data = response.data;
 
       // Save JWT token
       localStorage.setItem("token", data.token);
@@ -49,7 +37,11 @@ const LoginPage = () => {
       navigate("/notes");
     } catch (error) {
       console.error("Login error:", error);
-      setError("Something went wrong");
+
+      setError(
+        error.response?.data?.message ||
+          "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
@@ -69,21 +61,23 @@ const LoginPage = () => {
         )}
 
         <form onSubmit={handleLogin}>
+          {/* Username or Email */}
           <div className="mb-4">
             <label className="mb-2 block font-medium">
-              Email
+              Username or Email
             </label>
 
             <input
-              type="email"
-              placeholder="Enter your email"
+              type="text"
+              placeholder="Enter username or email"
               className="input input-bordered w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               required
             />
           </div>
 
+          {/* Password */}
           <div className="mb-6">
             <label className="mb-2 block font-medium">
               Password
